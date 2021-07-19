@@ -13,7 +13,6 @@ class EdgeDetectionDelegate(activity: Activity) : PluginRegistry.ActivityResultL
     private var result: MethodChannel.Result? = null
     private var methodCall: MethodCall? = null
 
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
 
         if (requestCode == REQUEST_CODE) {

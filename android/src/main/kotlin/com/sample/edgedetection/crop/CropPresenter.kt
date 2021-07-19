@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Matrix
+import android.os.Build
 import android.os.Environment
 import android.os.SystemClock
 import android.provider.MediaStore
@@ -162,20 +163,30 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(context, "please grant write file permission and try again", Toast.LENGTH_SHORT).show()
         } else {
-            val dir = File(Environment.getExternalStorageDirectory(), IMAGES_DIR)
+            val dir: File
+            val targetDirectory = Environment.DIRECTORY_DOCUMENTS
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                //dir = File (this.getExternalFilesDir(null) + "/smart_scanner");
+                dir = File(Environment.getExternalStoragePublicDirectory(targetDirectory), IMAGES_DIR)//.getPath() + "//Scans");
+
+//                val values = ContentValues().apply {
+//                    put(MediaStore.Images.Media.DISPLAY_NAME, originalFile.name)
+//                    put(MediaStore.Images.Media.MIME_TYPE, "application/pdf")
+//                    put(MediaStore.Images.Media.RELATIVE_PATH, targetDirectory)
+//                }
+//
+//                contentResolver.run {
+//                    val uri = this.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: throw IllegalStateException("Could not create insert uri")
+//                    outputStream = openOutputStream(uri) ?: throw IllegalStateException("Could not open output stream")
+//                }
+            } else {
+                dir = File(Environment.getExternalStorageDirectory(), IMAGES_DIR)
+            }
+
             if (!dir.exists()) {
                 dir.mkdirs()
             }
-
-//            if(rotateBitmap != null) {
-//                if (enhancedPicture != null) {
-//                    enhancedPicture = rotateBitmap
-//                    Log.i(TAG, "enhancedPicture Changed")
-//                } else if(croppedBitmap != null){
-//                    croppedBitmap = rotateBitmap
-//                    Log.i(TAG, "rotateBitmap Changed")
-//                }
-//            }
 
             val rotatePic = rotateBitmap
             if (null != rotatePic) {
