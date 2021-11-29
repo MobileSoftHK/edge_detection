@@ -10,5 +10,6 @@ interface IScanView {
         fun getDisplay(): Display
         fun getSurfaceView(): SurfaceView
         fun getPaperRect(): PaperRectangle
+        fun toggleInProgress(inProgress : Boolean)
     }
 }

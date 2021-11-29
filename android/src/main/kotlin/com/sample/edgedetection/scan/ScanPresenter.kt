@@ -45,6 +45,7 @@ class ScanPresenter constructor(private val context: Context, private val iView:
     private val executor: ExecutorService
     private val proxySchedule: Scheduler
     private var busy: Boolean = false
+    private var focusingForPictureTaking: Boolean = false
     private var soundSilence: MediaPlayer = MediaPlayer()
 
     init {
@@ -63,15 +64,26 @@ class ScanPresenter constructor(private val context: Context, private val iView:
     }
 
     fun shut() {
+        if (focusingForPictureTaking) {
+            return
+        }
+
         busy = true
         Log.i(TAG, "try to focus")
-        mCamera?.autoFocus { b, _ ->
-            Log.i(TAG, "focus result: " + b)
-            mCamera?.takePicture(ShutterCallback {
-                soundSilence.start()
-            }, null, this)
-            mCamera?.enableShutterSound(false)
-            //MediaActionSound().play(MediaActionSound.SHUTTER_CLICK)
+        try {
+            mCamera?.autoFocus { b, _ ->
+                Log.i(TAG, "focus result: " + b)
+                mCamera?.takePicture(ShutterCallback {
+                    soundSilence.start()
+                }, null, this)
+                mCamera?.enableShutterSound(false)
+                //MediaActionSound().play(MediaActionSound.SHUTTER_CLICK)
+            }
+            focusingForPictureTaking = true
+            iView.toggleInProgress(true)
+        } catch (e: RuntimeException) {
+            //attempted to autofocus while already autofocusing
+            e.printStackTrace()
         }
     }
 
@@ -171,6 +183,8 @@ class ScanPresenter constructor(private val context: Context, private val iView:
 
     override fun onPictureTaken(p0: ByteArray?, p1: Camera?) {
         Log.i(TAG, "on picture taken")
+        focusingForPictureTaking = false
+
         Observable.just(p0)
             .subscribeOn(proxySchedule)
             .subscribe {
@@ -196,6 +210,8 @@ class ScanPresenter constructor(private val context: Context, private val iView:
                     ), REQUEST_CODE
                 )
                 busy = false
+
+                iView.toggleInProgress(false)
             }
     }
 

@@ -2,6 +2,7 @@ package com.sample.edgedetection.crop
 
 import android.app.Activity
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -17,9 +18,19 @@ class CropActivity : BaseActivity(), ICropView.Proxy {
 
     private var showMenuItems = false
 
+    var savingInProgress : Boolean = false
+
     private lateinit var mPresenter: CropPresenter
 
     override fun prepare() {
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        paper.post {
+            //we have to initialize everything in post when the view has been drawn and we have the actual height and width of the whole view
+            mPresenter.onViewsReady(paper.width, paper.height)
+        }
     }
 
     override fun provideContentViewId(): Int = R.layout.activity_crop
@@ -74,10 +85,13 @@ class CropActivity : BaseActivity(), ICropView.Proxy {
             }
 
             if (item.title == applicationContext.getString(R.string.done)) {
+                if (savingInProgress) return true
+                savingInProgress = true
                 Log.e(TAG, "Saved touched!")
                 var path = mPresenter.save()
                 Log.e(TAG, "Saved touched! $path")
                 setResult(Activity.RESULT_OK, Intent().putExtra(SCANNED_RESULT, path))
+                savingInProgress = false
                 System.gc()
                 finish()
                 return true

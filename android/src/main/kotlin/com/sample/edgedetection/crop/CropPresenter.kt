@@ -41,8 +41,8 @@ class CropPresenter(val context: Context, private val iCropView: ICropView.Proxy
     private var rotateBitmapDegree: Int = -90
     private var rotateBitmapCurrentDegree: Int = 0
 
-    init {
-        iCropView.getPaperRect().onCorners2Crop(corners, picture?.size())
+    fun onViewsReady(paperWidth : Int, paperHeight : Int) {
+        iCropView.getPaperRect().onCorners2Crop(corners, picture?.size(), paperWidth, paperHeight)
         val bitmap = Bitmap.createBitmap(picture?.width() ?: 1080, picture?.height()
                 ?: 1920, Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(picture, bitmap, true)

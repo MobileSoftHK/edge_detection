@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.Display
 import android.view.MenuItem
 import android.view.SurfaceView
+import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.sample.edgedetection.R
@@ -142,6 +143,13 @@ class ScanActivity : BaseActivity(), IScanView.Proxy {
     override fun getSurfaceView(): SurfaceView = surface
 
     override fun getPaperRect(): PaperRectangle = paper_rect
+
+    override fun toggleInProgress(inProgress: Boolean) {
+        runOnUiThread {
+            shut.visibility = if (inProgress) View.GONE else View.VISIBLE
+            progressBar.visibility = if (inProgress) View.VISIBLE else View.GONE
+        }
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_CODE) {
