@@ -1,5 +1,6 @@
 package com.sample.edgedetection.scan
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -112,6 +113,7 @@ class ScanPresenter constructor(private val context: Context, private val iView:
             return
         }
 
+        toggleTorch(false) //disable torch so auto-flash is not enabled
 
         val param = mCamera?.parameters
         val size = getMaxResolution()
@@ -151,7 +153,6 @@ class ScanPresenter constructor(private val context: Context, private val iView:
         } else {
             Log.d(TAG, "autofocus not available")
         }
-        param?.flashMode = Camera.Parameters.FLASH_MODE_AUTO
 
         try {
             mCamera?.parameters = param
@@ -181,6 +182,7 @@ class ScanPresenter constructor(private val context: Context, private val iView:
         }
     }
 
+    @SuppressLint("CheckResult")
     override fun onPictureTaken(p0: ByteArray?, p1: Camera?) {
         Log.i(TAG, "on picture taken")
         focusingForPictureTaking = false
@@ -269,9 +271,40 @@ class ScanPresenter constructor(private val context: Context, private val iView:
         } catch (e: Exception) {
             print(e.message)
         }
-
     }
 
     private fun getMaxResolution(): Camera.Size? =
         mCamera?.parameters?.supportedPreviewSizes?.maxBy { it.width }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////
+    //////////////////////////////////      TORCH
+    //////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    fun isTorchAvailable() : Boolean {
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
+    }
+
+    fun isTorchOn(): Boolean {
+        if (!isTorchAvailable()) return false
+
+        return mCamera?.parameters?.let { parameters ->
+            return parameters.flashMode == Camera.Parameters.FLASH_MODE_TORCH
+        } ?: false
+    }
+
+    private fun toggleTorch(turnOn : Boolean) {
+        mCamera?.parameters?.let { parameters ->
+            parameters.flashMode = if (turnOn) Camera.Parameters.FLASH_MODE_TORCH else Camera.Parameters.FLASH_MODE_OFF
+            mCamera?.parameters = parameters;
+            mCamera?.startPreview();
+        }
+    }
+
+    fun toggleTorch() {
+        toggleTorch(!isTorchOn())
+    }
 }

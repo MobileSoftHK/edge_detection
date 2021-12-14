@@ -1,16 +1,16 @@
 package com.sample.edgedetection.view
 
-import android.app.Activity
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import com.sample.edgedetection.SourceManager
 import com.sample.edgedetection.processor.Corners
 import com.sample.edgedetection.processor.TAG
+import com.sample.edgedetection.utils.CLOSE_POINTS_WIDTH_RATIO
+import com.sample.edgedetection.utils.DEFAULT_POINT_MARGIN_RATIO
+import com.sample.edgedetection.utils.distanceTo
 import org.opencv.core.Point
 import org.opencv.core.Size
 
@@ -80,17 +80,68 @@ class PaperRectangle : View {
         invalidate()
     }
 
-    fun onCorners2Crop(corners: Corners?, size: Size?, paperWidth : Int, paperHeight : Int) {
-
+    fun onCorners2Crop(corners: Corners?, size: Size?, paperWidth: Int, paperHeight: Int) {
         cropMode = true
-        tl = corners?.corners?.get(0) ?: SourceManager.defaultTl
-        tr = corners?.corners?.get(1) ?: SourceManager.defaultTr
-        br = corners?.corners?.get(2) ?: SourceManager.defaultBr
-        bl = corners?.corners?.get(3) ?: SourceManager.defaultBl
+
+        val pictureWidth = size?.width?.toInt() ?: paperWidth // just in case elvis
+        val pictureHeight = size?.height?.toInt() ?: paperHeight // just in case elvis
+
+        val points =
+            if (shouldDefaultPoints(corners, pictureWidth, pictureHeight)) {
+                getDefaultPoints(pictureWidth, pictureHeight)
+            } else {
+                corners?.corners ?: getDefaultPoints(pictureWidth, pictureHeight)
+            }
+
+        tl = points[0]!!
+        tr = points[1]!!
+        br = points[2]!!
+        bl = points[3]!!
+
         ratioX = size?.width?.div(paperWidth) ?: 1.0
         ratioY = size?.height?.div(paperHeight) ?: 1.0
         resize()
         movePoints()
+    }
+
+    /**
+     * @param width the width of the picture to use as a base for calculating the minimal-point-distance limit
+     * @param height (for future use) the height of the picture to use as a base for calculating the minimal-point-distance limit
+     * @return true if the provided [corners] are null, their size is not 4 or the distance between the two closest point is less that a given relative limit (see [CLOSE_POINTS_WIDTH_RATIO])
+     */
+    private fun shouldDefaultPoints(corners: Corners?, width: Int, height: Int): Boolean {
+        if (corners == null) return true
+
+        val points = corners.corners.filterNotNull()
+
+        if (points.size != 4) return true
+
+        val distances: HashSet<Int> = HashSet()
+        points.forEachIndexed { i, point ->
+            for (j in i+1 until corners.corners.size) {
+                distances.add(point.distanceTo(points[j]).toInt())
+            }
+        }
+
+        return distances.min()!! < (width * CLOSE_POINTS_WIDTH_RATIO)
+    }
+
+    /**
+     * @param width the width of the picture to use as an anchor for the default points
+     * @param height the height of the picture to use as an anchor for the default points
+     * @return ordered (tl, tr, br, bl) list of default point positioned in the corners of the picture with some static margins (see [DEFAULT_POINT_MARGIN_RATIO])
+     */
+    private fun getDefaultPoints(width: Int, height: Int): List<Point> {
+        val marginX = width * DEFAULT_POINT_MARGIN_RATIO
+        val marginY = marginX
+
+        val points = mutableListOf<Point>()
+        points.add(Point(marginX, marginY))
+        points.add(Point(width - marginX, marginY))
+        points.add(Point(width - marginX, height - marginY))
+        points.add(Point(marginX, height - marginY))
+
+        return points
     }
 
     fun getCorners2Crop(): List<Point> {

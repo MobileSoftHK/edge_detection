@@ -91,7 +91,6 @@ class CropActivity : BaseActivity(), ICropView.Proxy {
                 var path = mPresenter.save()
                 Log.e(TAG, "Saved touched! $path")
                 setResult(Activity.RESULT_OK, Intent().putExtra(SCANNED_RESULT, path))
-                savingInProgress = false
                 System.gc()
                 finish()
                 return true

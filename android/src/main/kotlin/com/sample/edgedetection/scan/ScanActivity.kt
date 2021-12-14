@@ -4,10 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
-import android.view.Display
-import android.view.MenuItem
-import android.view.SurfaceView
-import android.view.View
+import android.view.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.sample.edgedetection.R
@@ -18,6 +15,8 @@ import com.sample.edgedetection.view.PaperRectangle
 
 import kotlinx.android.synthetic.main.activity_scan.*
 import org.opencv.android.OpenCVLoader
+import androidx.core.graphics.drawable.DrawableCompat
+
 
 class ScanActivity : BaseActivity(), IScanView.Proxy {
 
@@ -86,6 +85,7 @@ class ScanActivity : BaseActivity(), IScanView.Proxy {
     override fun onStart() {
         super.onStart()
         mPresenter.start()
+        invalidateOptionsMenu()
     }
 
     override fun onStop() {
@@ -95,6 +95,11 @@ class ScanActivity : BaseActivity(), IScanView.Proxy {
 
     override fun exit() {
         finish()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        invalidateOptionsMenu()
     }
 
     override fun onRequestPermissionsResult(
@@ -164,11 +169,35 @@ class ScanActivity : BaseActivity(), IScanView.Proxy {
         super.onActivityResult(requestCode, resultCode, data)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.scan_activity_menu, menu)
+
+        menu?.findItem(R.id.action_torch)?.isVisible = mPresenter.isTorchAvailable()
+
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menu?.findItem(R.id.action_torch)?.icon?.let { icon ->
+            val drawable = DrawableCompat.wrap(icon)
+            val flashOn = mPresenter.isTorchOn()
+            DrawableCompat.setTint(drawable, ContextCompat.getColor(this, if (flashOn) R.color.colorFlashOn else R.color.colorFlashOff))
+            menu.findItem(R.id.action_torch).icon = drawable
+        }
+
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
         if (item.itemId == android.R.id.home) {
             onBackPressed()
             return true
+        }
+
+        if (item.itemId == R.id.action_torch) {
+            mPresenter.toggleTorch()
+            invalidateOptionsMenu()
         }
 
         return super.onOptionsItemSelected(item)
