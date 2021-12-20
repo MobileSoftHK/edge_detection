@@ -37,6 +37,10 @@ import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+/**
+ * Set to [true] in order to make manual torch button toggling available and disable auto flash when taking picture.
+ */
+const val MANUAL_TORCH_AVAILABLE = false
 
 class ScanPresenter constructor(private val context: Context, private val iView: IScanView.Proxy) :
     SurfaceHolder.Callback, Camera.PictureCallback, Camera.PreviewCallback {
@@ -113,7 +117,9 @@ class ScanPresenter constructor(private val context: Context, private val iView:
             return
         }
 
-        toggleTorch(false) //disable torch so auto-flash is not enabled
+        if (MANUAL_TORCH_AVAILABLE) {
+            toggleTorch(false) //disable torch so auto-flash is not enabled
+        }
 
         val param = mCamera?.parameters
         val size = getMaxResolution()
@@ -152,6 +158,11 @@ class ScanPresenter constructor(private val context: Context, private val iView:
             Log.d(TAG, "enabling autofocus")
         } else {
             Log.d(TAG, "autofocus not available")
+        }
+
+        if (!MANUAL_TORCH_AVAILABLE) {
+            //auto flash mode if manual torch not available
+            param?.flashMode = Camera.Parameters.FLASH_MODE_AUTO
         }
 
         try {
@@ -285,7 +296,7 @@ class ScanPresenter constructor(private val context: Context, private val iView:
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     fun isTorchAvailable() : Boolean {
-        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
+        return MANUAL_TORCH_AVAILABLE && context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
     }
 
     fun isTorchOn(): Boolean {
