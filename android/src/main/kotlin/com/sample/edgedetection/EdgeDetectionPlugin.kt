@@ -18,7 +18,7 @@ class EdgeDetectionPlugin(
             if (registrar.activity() != null) {
                 val channel = MethodChannel(registrar.messenger(), "edge_detection")
 
-                val delegate = EdgeDetectionDelegate(registrar.activity())
+                val delegate = EdgeDetectionDelegate(registrar.requireActivity())
 
                 registrar.addActivityResultListener(delegate)
 
