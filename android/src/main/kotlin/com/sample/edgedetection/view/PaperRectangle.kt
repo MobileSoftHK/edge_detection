@@ -123,7 +123,7 @@ class PaperRectangle : View {
             }
         }
 
-        return distances.min()!! < (width * CLOSE_POINTS_WIDTH_RATIO)
+        return distances.minOrNull()!! < (width * CLOSE_POINTS_WIDTH_RATIO)
     }
 
     /**
@@ -184,7 +184,7 @@ class PaperRectangle : View {
 
     private fun calculatePoint2Move(downX: Float, downY: Float) {
         val points = listOf(tl, tr, br, bl)
-        point2Move = points.minBy { Math.abs((it.x - downX).times(it.y - downY)) } ?: tl
+        point2Move = points.minByOrNull { Math.abs((it.x - downX).times(it.y - downY)) } ?: tl
     }
 
     private fun movePoints() {
